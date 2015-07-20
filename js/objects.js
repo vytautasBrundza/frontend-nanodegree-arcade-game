@@ -9,16 +9,16 @@ var CImageDecorator= function(obj,x,y,img){
 	obj.DrawImage=CImageDecorator.prototype.Draw;
 	obj.SetImgPos=CImageDecorator.prototype.SetPos;
 	return obj;
-};
+}
 
 CImageDecorator.prototype.Draw= function(){
 		ctx.drawImage(Resources.get(this.img),this.x,this.y);
-	}
+}
 
 CImageDecorator.prototype.SetPos= function(x,y){
 		this.x=x;
 		this.y=y;
-	}
+}
 
 // custom sprite decorator
 
@@ -32,7 +32,7 @@ var CSpriteDecorator = function(obj,num)
 	obj.NextSprite=CSpriteDecorator.prototype.Next;
 	obj.DrawSprite=CSpriteDecorator.prototype.Draw;
 	return obj;
-};
+}
 
 CSpriteDecorator.prototype.Draw= function(){
 	image=Resources.get(this.img);
@@ -45,7 +45,7 @@ CSpriteDecorator.prototype.Draw= function(){
            this.y,
            image.width / num,
            image.height);
-		}
+}
 
 CSpriteDecorator.prototype.Update=function(dt){this.spriteTime=this.spriteTime+dt; if(this.spriteTime=this.speed) {this.Next(); this.spriteTime=0;}};
 
@@ -58,7 +58,7 @@ var MoveDecorator = function(obj, speed)
 	obj.MakeMove=MoveDecorator.prototype.MakeMove;
 	obj.speed=speed;
 	return obj;
-};
+}
 
 MoveDecorator.prototype.MakeMove= function(dt) {
     this.x=this.x+dt*this.speed*100;
@@ -68,52 +68,78 @@ MoveDecorator.prototype.MakeMove= function(dt) {
 
 // custom game objects constructors
 
-// enemy constructor
+// object moving on scene constructor
 
-var Enemy= function(img, row, speed){
+var Actor= function(img, row, speed){
 	obj={};
-	var y=row*tileHeight;
+	var y=row*TILE_HEIGHT;
 	obj.row=row;
 	var startingPos;
 	if(speed>0) startingPos=-Resources.get(img).width; else startingPos=canvas.width;
 	obj=CImageDecorator(obj,startingPos,y,img);
 	obj=MoveDecorator(obj, speed);
-	obj.Update=Enemy.prototype.Update;
+	obj.Update=Actor.prototype.Update;
 	return obj;
-};
+}
 
-Enemy.prototype.Update=function(dt){
+Actor.prototype.Update=function(dt){
 	this.MakeMove(dt);
+}
+
+var BonusObject= function(img, x, row, value){
+	obj={};
+	var y=row*TILE_HEIGHT;
+	obj.row=row;
+	var startingPos;
+	obj=CImageDecorator(obj,x,y,img);
+	obj.value=value;
+	return obj;
 }
 
 // player constructor
 
 var Player= function(img, speed){
 	obj={};
-	obj.row=mapRow.length-1;
-	var y=obj.row*tileHeight;
-	var startingPos=(canvas.width-Resources.get(this.img).width)/2;
+	obj.row=NUM_ROWS-1;
+	var y=obj.row*TILE_HEIGHT;
+	var startingPos=CANVAS_WIDTH/2;
 	obj=CImageDecorator(obj,startingPos,y,img);
 	obj=MoveDecorator(obj, speed);
 	obj.Update=Player.prototype.Update;
 	obj.MoveRow=Player.prototype.MoveRow;
+	obj.Reset=Player.prototype.Reset;
+	obj.moveLeft=false;
+	obj.moveRight=false;
+	obj.riding=false;
 	return obj;
-};
+}
 
 Player.prototype.Update=function(dt){
-	var keystate= GetKeyState();
-	if(keystate)console.log(keystate);
-	if(keystate=='left') this.x=this.x-dt*this.speed*100;
-	if(keystate=='right') this.x=this.x+dt*this.speed*100;
+	if(this.moveLeft) this.x=this.x-dt*this.speed*100;
+	if(this.moveRight) this.x=this.x+dt*this.speed*100;
+	if(this.riding){this.x=this.x+dt*mapRow[this.row].speed*100;}
+	if(this.x<0)this.x=this.x>0;
+	var imgwidth=Resources.get(this.img).width;
+	if(this.x>CANVAS_WIDTH-imgwidth)this.x=CANVAS_WIDTH-imgwidth;
+}
+Player.prototype.Reset=function(){
+	this.row=NUM_ROWS-1;
+	this.y=this.row*TILE_HEIGHT;
+	this.x=CANVAS_WIDTH/2;
+	this.riding=false;
+	this.moveLeft=false;
+	this.moveRight=false;
 }
 
 // player should be jumping between rows, rather than moving
 
 Player.prototype.MoveRow=function(direction){
-	if(direction=='up'){
-		if(this.row<mapRow.length-1) this.row++;
+	if(direction=='down'){
+		if(this.row<NUM_ROWS-1) this.row++;
 	}
-	else if(this.row>0 && direction=='down') this.row--;
-	this.y=this.row*tileHeight;
+	else if(this.row>0 && direction=='up') {this.row--; if(this.row==0)GameOver(true);}
+	this.y=this.row*TILE_HEIGHT;
+	if(mapRow[this.row].walkable){this.riding=false;}
+	else{this.riding=true;}
 }
 

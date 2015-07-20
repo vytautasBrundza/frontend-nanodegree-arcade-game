@@ -14,10 +14,11 @@
  * a little simpler to work with.
  */
 
- var Row=function(speed, cooldown, rindex, objects)
+ var Row=function(speed, cooldown, rindex, walkable, objects)
 {
     var obj={};
     obj.rindex=rindex;
+    obj.walkable=walkable;
     obj.movingObjectsType=objects;
     obj.movingObjects=[];
     obj.staticObjects=[];
@@ -41,12 +42,16 @@ Row.prototype.Update= function(dt){
             switch(this.movingObjectsType) {
                 case "bug":
                     if(this.speed>0)
-                        this.movingObjects.push(Enemy('images/enemy-bug-right.png',this.rindex,this.speed));
+                        this.movingObjects.push(Actor('images/enemy-bug-right.png',this.rindex,this.speed));
                     else
-                        this.movingObjects.push(Enemy('images/enemy-bug-left.png',this.rindex,this.speed));
+                        this.movingObjects.push(Actor('images/enemy-bug-left.png',this.rindex,this.speed));
                     break;
                 case "log":
-                    //code block
+                    if(this.speed>0)
+                        this.movingObjects.push(Actor('images/log.png',this.rindex,this.speed));
+                    else
+                        this.movingObjects.push(Actor('images/log.png',this.rindex,this.speed));
+                    break;
                     break;
             }
             this.cooldown=this.cooldownTime;
@@ -73,29 +78,35 @@ var Engine = (function(global) {
         lastTime;
 
     var Map = [
-            'images/water-block.png',   // Top row
+            'images/grass-block.png',   // Top row
             'images/grass-block.png',
             'images/stone-block.png',
             'images/water-block.png',
             'images/stone-block.png',
             'images/grass-block.png'    // Bottom row
         ],
-        row, col,
-        paused=false;
+        row, col;
     var mapRow=[];
 
-    mapRow.push(Row(0,0,0,"none"));
-    mapRow.push(Row(1,3,1,"bug"));
-    mapRow.push(Row(-2,2,2,"bug"));
-    mapRow.push(Row(1,3,3,"log"));
-    mapRow.push(Row(2,2,4,"bug"));
-    mapRow.push(Row(0,5,"none"));
+    // add rows
 
-    canvas.width = tileWidth*numCols;
-    canvas.height = tileHeight*(numRows+1);
+    mapRow.push(Row(0,0,0,true,"none"));
+    mapRow.push(Row(-1,3,1,true,"bug"));
+    mapRow.push(Row(1.5,2,2,true,"bug"));
+    mapRow.push(Row(-1,3,3,false,"log"));
+    mapRow.push(Row(1.5,2,4,true,"bug"));
+    mapRow.push(Row(0,5,true,"none"));
+
+    // add static objects
+
+    mapRow[4].staticObjects.push(BonusObject('images/gem-blue.png', CANVAS_WIDTH/3,4,20));
+    mapRow[4].staticObjects.push(BonusObject('images/gem-blue.png', CANVAS_WIDTH/2,2,20));
+
+    canvas.width = CANVAS_WIDTH;
+    canvas.height = CANVAS_HEIGHT;
     doc.body.appendChild(canvas);
 
-    var player=Player('images/char-boy.png', 1.5);
+    var player=Player(playerImage, 1.5);
 
     /* This function serves as the kickoff point for the game loop itself
      * and handles properly calling the update and render methods.
@@ -107,7 +118,6 @@ var Engine = (function(global) {
          * would be the same for everyone (regardless of how fast their
          * computer is) - hurray time!
          */
-         if(!paused){
             var now = Date.now(),
                 dt = (now - lastTime) / 1000.0;
 
@@ -121,7 +131,6 @@ var Engine = (function(global) {
              * for the next time this function is called.
              */
             lastTime = now;
-        }
         /* Use the browser's requestAnimationFrame function to call this
          * function again as soon as the browser is able to draw another frame.
          */
@@ -148,8 +157,11 @@ var Engine = (function(global) {
      * on the entities themselves within your app.js file).
      */
     function update(dt) {
-        updateEntities(dt);
-        // checkCollisions();
+        if(!paused){
+            updateEntities(dt);
+            CheckCollisions();
+        }
+        UpdateFloaters(dt);
     }
 
     /* This is called by the update function  and loops through all of the
@@ -169,9 +181,38 @@ var Engine = (function(global) {
             entitiesList=entitiesList+"\nrow "+i+" length "+mapRow[i].movingObjects.length;
             mapRow[i].Update(dt);
         };
-        player.Update();
-        console.log(entitiesList);
+        player.Update(dt);
+        //console.log(entitiesList);
+    }
 
+    function CheckCollisions(dt) {
+        var row=mapRow[player.row];
+        if(row.walkable){
+            for (var i = 0; i < row.movingObjects.length; i++) {
+                var colObj=row.movingObjects[i];
+                if(colObj.x+Resources.get(colObj.img).width-COLLISION_REDUCTION>player.x && player.x+Resources.get(player.img).width-COLLISION_REDUCTION>colObj.x){
+                    GameOver(false);
+                }
+            }
+        }else{
+            var onLog=false;
+            for (var i = 0; i < row.movingObjects.length; i++) {
+                var colObj=row.movingObjects[i];
+                if(player.x+Resources.get(player.img).width-WALK_COLLISION_REDUCTION>colObj.x && colObj.x+Resources.get(colObj.img).width-WALK_COLLISION_REDUCTION>player.x){
+                   onLog=true;
+                }
+            }
+            if(!onLog)
+            {GameOver(false);}
+        };
+    }
+
+    function GameOver(win) {
+        if(win){CreateFloater(CANVAS_WIDTH/3,CANVAS_HEIGHT*3/4,"You won!");}
+        else{CreateFloater(CANVAS_WIDTH/3,CANVAS_HEIGHT*3/4,"You lost!");}
+        player.Reset();
+
+        paused=true;
     }
 
     /* This function initially draws the "game level", it will then call
@@ -190,8 +231,9 @@ var Engine = (function(global) {
          * and, using the rowImages array, draw the correct image for that
          * portion of the "grid"
          */
-        for (row = 0; row < numRows; row++) {
-            for (col = 0; col < numCols; col++) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (row = 0; row < NUM_ROWS; row++) {
+            for (col = 0; col < NUM_COLUMNS; col++) {
                 /* The drawImage function of the canvas' context element
                  * requires 3 parameters: the image to draw, the x coordinate
                  * to start drawing and the y coordinate to start drawing.
@@ -199,11 +241,12 @@ var Engine = (function(global) {
                  * so that we get the benefits of caching these images, since
                  * we're using them over and over.
                  */
-                ctx.drawImage(Resources.get(Map[row]), col * tileWidth, row * tileHeight);
+                ctx.drawImage(Resources.get(Map[row]), col * TILE_WIDTH, row * TILE_HEIGHT);
             }
         }
-
         renderEntities();
+        RenderFloaters();
+        if(paused){DrawPaused();};
     }
 
     /* This function is called by the render function and is called on each game
@@ -243,6 +286,8 @@ var Engine = (function(global) {
         'images/grass-block.png',
         'images/enemy-bug-left.png',
         'images/enemy-bug-right.png',
+        'images/log.png',
+        'images/gem-blue.png',
         'images/char-boy.png'
     ]);
     Resources.onReady(init);
@@ -255,6 +300,5 @@ var Engine = (function(global) {
     global.canvas = canvas;
     global.mapRow = mapRow;
     global.player = player;
-    global.paused = paused;
-
+    global.GameOver=GameOver;
 })(this);

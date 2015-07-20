@@ -1,24 +1,15 @@
-// This listens for key presses and sends the keys to your
-// Player.handleInput() method. You don't need to modify this.
-document.addEventListener('keypress', function(e) {
-    var allowedKeys = {
-        38: 'up',
-        40: 'down',
-    };
-    if(e.keyCode=32){paused=!paused;};
-    player.MoveRow(allowedKeys[e.keyCode]);
-})
+// The list of constants and global variables
 
-function GetKeyState(){
-    e = window.event;
-    if (e.left) {return 'left';}
-    if (e.right) { return 'right';}
-}
-/*
-document.addEventListener('keydown', function(e) {
-    var allowedKeys = {
-        37: 'left',
-        39: 'right'
-    };
-    player.handleInput(allowedKeys[e.keyCode]);
-});*/
+NUM_ROWS = 6;
+NUM_COLUMNS = 6;
+TILE_WIDTH=101;
+TILE_HEIGHT=83;
+CANVAS_WIDTH=TILE_WIDTH*NUM_COLUMNS;
+CANVAS_HEIGHT=TILE_HEIGHT*(NUM_ROWS+1);
+playerImage='images/char-boy.png';
+playing=false;
+paused=false;
+FLOATER_SPEED=2;
+COLLISION_REDUCTION=20;  // reduce collision area
+WALK_COLLISION_REDUCTION=30;  // reduce collision area for walking even more
+score=0;
