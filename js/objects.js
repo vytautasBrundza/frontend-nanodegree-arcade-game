@@ -1,5 +1,7 @@
 // DECLARATIONS OF GAME OBJECTS
 
+// Decorator is a pattern that adds functionality to object - extends it
+
 // custom image decorator
 
 var CImageDecorator= function(obj,x,y,img){
@@ -7,7 +9,6 @@ var CImageDecorator= function(obj,x,y,img){
 	obj.y=y;
 	obj.img=img;
 	obj.DrawImage=CImageDecorator.prototype.Draw;
-	obj.SetImgPos=CImageDecorator.prototype.SetPos;
 	return obj;
 }
 
@@ -15,18 +16,13 @@ CImageDecorator.prototype.Draw= function(){
 		ctx.drawImage(Resources.get(this.img),this.x,this.y);
 }
 
-CImageDecorator.prototype.SetPos= function(x,y){
-		this.x=x;
-		this.y=y;
-}
-
-// custom sprite decorator
+// custom sprite decorator - animated image
 
 var CSpriteDecorator = function(obj,num)
 {
 	obj.num=num;
 	obj.slide=0;
-	obj.speed=1;
+	obj.spriteSpeed=1;
 	obj.spriteTime=0;
 	obj.UpdateSprite=CSpriteDecorator.prototype.Update;
 	obj.NextSprite=CSpriteDecorator.prototype.Next;
@@ -36,20 +32,20 @@ var CSpriteDecorator = function(obj,num)
 
 CSpriteDecorator.prototype.Draw= function(){
 	image=Resources.get(this.img);
-		ctx.drawImage(image,
-           this.slide * image.width / num,
-           0,
-           image.width / num,
-           image.height,
-           this.x,
-           this.y,
-           image.width / num,
-           image.height);
+	ctx.drawImage(image,
+       this.slide * image.width / this.num,
+       0,
+       image.width / this.num,
+       image.height,
+       this.x,
+       this.y,
+       image.width / this.num,
+       image.height);
 }
 
-CSpriteDecorator.prototype.Update=function(dt){this.spriteTime=this.spriteTime+dt; if(this.spriteTime=this.speed) {this.Next(); this.spriteTime=0;}};
+CSpriteDecorator.prototype.Update=function(dt){this.spriteTime=this.spriteTime+dt; if(this.spriteTime>=this.spriteSpeed) {this.NextSprite(); this.spriteTime=0;}};
 
-CSpriteDecorator.prototype.Next=function(){ if(this.slide==this.num)this.slide=0; else this.slide++;};
+CSpriteDecorator.prototype.Next=function(){if(this.slide==this.num-1)this.slide=0; else this.slide++;};
 
 // moving object decorator
 
@@ -92,6 +88,7 @@ var BonusObject= function(img, x, row, value){
 	obj.row=row;
 	var startingPos;
 	obj=CImageDecorator(obj,x,y,img);
+	obj=CSpriteDecorator(obj,2);
 	obj.value=value;
 	return obj;
 }

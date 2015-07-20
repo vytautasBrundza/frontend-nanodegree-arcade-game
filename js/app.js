@@ -36,7 +36,7 @@ var UpdateFloaters=function(dt){
         }
     };
     for (var i = 0; i < toRemove.length; i++) {
-        floaters.splice(floaters.indexOf(toRemove[i]),i);
+        floaters.splice(floaters.indexOf(toRemove[i]),1);
     };
 
 }
@@ -66,4 +66,10 @@ var DrawPaused= function(){
     ctx.font = "48px arial";
     ctx.fillStyle = 'grey';
     ctx.fillText("PAUSED", CANVAS_WIDTH/3,CANVAS_HEIGHT*0.5);
+}
+
+var DrawScore= function(){
+    ctx.font = "30px arial";
+    ctx.fillStyle = '#026849';
+    ctx.fillText("Score: "+score, 10,100);
 }

@@ -31,14 +31,19 @@
 }
 
 Row.prototype.Update= function(dt){
-    //console.log("update row");
+    //update static objects - sprites
+    for (var j = 0; j < this.staticObjects.length; j++) {
+            this.staticObjects[j].UpdateSprite(dt);
+        };
+    // update moving objects
     if(this.movingObjectsType!="none"){
+        // move objects
         for (var j = 0; j < this.movingObjects.length; j++) {
             this.movingObjects[j].Update(dt);
         };
+        // spawn new objects
         this.cooldown=this.cooldown-dt;
         if(this.cooldown<=0){
-            //console.log("spawn object "+this.movingObjectsType);
             switch(this.movingObjectsType) {
                 case "bug":
                     if(this.speed>0)
@@ -47,20 +52,19 @@ Row.prototype.Update= function(dt){
                         this.movingObjects.push(Actor('images/enemy-bug-left.png',this.rindex,this.speed));
                     break;
                 case "log":
-                    if(this.speed>0)
-                        this.movingObjects.push(Actor('images/log.png',this.rindex,this.speed));
-                    else
-                        this.movingObjects.push(Actor('images/log.png',this.rindex,this.speed));
-                    break;
+                    this.movingObjects.push(Actor('images/log.png',this.rindex,this.speed));
                     break;
             }
+            // reset spawn cooldown
             this.cooldown=this.cooldownTime;
         }
     }
 }
 
 Row.prototype.Render= function(dt){
-    //console.log("update row");
+    for (var i = 0; i < this.staticObjects.length; i++) {
+        this.staticObjects[i].DrawSprite();
+    };
     for (var j = 0; j < this.movingObjects.length; j++) {
         this.movingObjects[j].DrawImage();
     };
@@ -99,8 +103,8 @@ var Engine = (function(global) {
 
     // add static objects
 
-    mapRow[4].staticObjects.push(BonusObject('images/gem-blue.png', CANVAS_WIDTH/3,4,20));
-    mapRow[4].staticObjects.push(BonusObject('images/gem-blue.png', CANVAS_WIDTH/2,2,20));
+    mapRow[4].staticObjects.push(BonusObject('images/gem-blue-shining.png', CANVAS_WIDTH/3,4,20));
+    mapRow[2].staticObjects.push(BonusObject('images/gem-blue-shining.png', CANVAS_WIDTH/2,2,20));
 
     canvas.width = CANVAS_WIDTH;
     canvas.height = CANVAS_HEIGHT;
@@ -172,46 +176,53 @@ var Engine = (function(global) {
      * render methods.
      */
     function updateEntities(dt) {
-        /*allEnemies.forEach(function(enemy) {
-            enemy.update(dt);
-        });
-        player.update();*/
-        var entitiesList="entities list:";
+        // update map rows
         for (var i = 0; i < mapRow.length; i++) {
-            entitiesList=entitiesList+"\nrow "+i+" length "+mapRow[i].movingObjects.length;
             mapRow[i].Update(dt);
         };
+        // update player
         player.Update(dt);
-        //console.log(entitiesList);
     }
 
     function CheckCollisions(dt) {
         var row=mapRow[player.row];
+        // check if player is not falling down or not being hit by enemy
         if(row.walkable){
             for (var i = 0; i < row.movingObjects.length; i++) {
                 var colObj=row.movingObjects[i];
                 if(colObj.x+Resources.get(colObj.img).width-COLLISION_REDUCTION>player.x && player.x+Resources.get(player.img).width-COLLISION_REDUCTION>colObj.x){
+                    // player is not on walkable object
                     GameOver(false);
                 }
             }
         }else{
-            var onLog=false;
+            var onWalkable=false;
             for (var i = 0; i < row.movingObjects.length; i++) {
                 var colObj=row.movingObjects[i];
                 if(player.x+Resources.get(player.img).width-WALK_COLLISION_REDUCTION>colObj.x && colObj.x+Resources.get(colObj.img).width-WALK_COLLISION_REDUCTION>player.x){
-                   onLog=true;
+                   // player is on one of walkable objects
+                   onWalkable=true;
                 }
             }
-            if(!onLog)
+            if(!onWalkable)
             {GameOver(false);}
         };
+        // check collision with static objects - at this point only bonus items are static
+        for (var k = 0; k < row.staticObjects.length; k++) {
+            var colObj=row.staticObjects[k];
+            if(colObj.x+Resources.get(colObj.img).width-COLLISION_REDUCTION>player.x && player.x+Resources.get(player.img).width-COLLISION_REDUCTION>colObj.x){
+                // add score
+                score=score+colObj.value;
+                // remove item
+                row.staticObjects.splice(row.staticObjects.indexOf(colObj),1);
+            }
+        }
     }
 
     function GameOver(win) {
         if(win){CreateFloater(CANVAS_WIDTH/3,CANVAS_HEIGHT*3/4,"You won!");}
         else{CreateFloater(CANVAS_WIDTH/3,CANVAS_HEIGHT*3/4,"You lost!");}
-        player.Reset();
-
+        reset();
         paused=true;
     }
 
@@ -222,30 +233,20 @@ var Engine = (function(global) {
      * they are just drawing the entire screen over and over.
      */
     function render() {
-        /* This array holds the relative URL to the image used
-         * for that particular row of the game level.
-         */
-
-
-        /* Loop through the number of rows and columns we've defined above
-         * and, using the rowImages array, draw the correct image for that
-         * portion of the "grid"
-         */
+        // clear context
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // draw map
         for (row = 0; row < NUM_ROWS; row++) {
             for (col = 0; col < NUM_COLUMNS; col++) {
-                /* The drawImage function of the canvas' context element
-                 * requires 3 parameters: the image to draw, the x coordinate
-                 * to start drawing and the y coordinate to start drawing.
-                 * We're using our Resources helpers to refer to our images
-                 * so that we get the benefits of caching these images, since
-                 * we're using them over and over.
-                 */
                 ctx.drawImage(Resources.get(Map[row]), col * TILE_WIDTH, row * TILE_HEIGHT);
             }
         }
+        // draw player and other objects
         renderEntities();
+        DrawScore();
+        // render floating text boxes
         RenderFloaters();
+        // draw paused text
         if(paused){DrawPaused();};
     }
 
@@ -254,26 +255,27 @@ var Engine = (function(global) {
      * on your enemy and player entities within app.js
      */
     function renderEntities() {
-        /* Loop through all of the objects within the allEnemies array and call
-         * the render function you have defined.
-
-        allEnemies.forEach(function(enemy) {
-            enemy.render();
-        });
-
-        player.render();*/
-         for (var i = 0; i < mapRow.length; i++) {
+        // render each row (row renders all objects that belongs to it)
+        for (var i = 0; i < mapRow.length; i++) {
             mapRow[i].Render();
         };
+        // draw player
         player.DrawImage();
     }
 
-    /* This function does nothing but it could have been a good place to
-     * handle game reset states - maybe a new game menu or a game over screen
-     * those sorts of things. It's only called once by the init() method.
-     */
+    // reset after player lost or won
     function reset() {
-        // noop
+        // empty rows static objects
+        for (var i = 0; i < mapRow.length; i++) {
+            mapRow[i].staticObjects=[];
+        }
+        // add a new set of static objects
+        mapRow[4].staticObjects.push(BonusObject('images/gem-blue-shining.png', CANVAS_WIDTH/3,4,20));
+        mapRow[2].staticObjects.push(BonusObject('images/gem-blue-shining.png', CANVAS_WIDTH/2,2,20));
+        // reset player
+        player.Reset();
+        //reset score;
+        score=0;
     }
 
     /* Go ahead and load all of the images we know we're going to need to
@@ -287,7 +289,7 @@ var Engine = (function(global) {
         'images/enemy-bug-left.png',
         'images/enemy-bug-right.png',
         'images/log.png',
-        'images/gem-blue.png',
+        'images/gem-blue-shining.png',
         'images/char-boy.png'
     ]);
     Resources.onReady(init);
