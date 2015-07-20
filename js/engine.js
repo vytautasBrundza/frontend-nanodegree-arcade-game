@@ -14,6 +14,53 @@
  * a little simpler to work with.
  */
 
+ var Row=function(speed, cooldown, rindex, objects)
+{
+    var obj={};
+    obj.rindex=rindex;
+    obj.movingObjectsType=objects;
+    obj.movingObjects=[];
+    obj.staticObjects=[];
+    obj.speed=speed;
+    obj.cooldownTime=cooldown;
+    obj.cooldown=cooldown*0.5;
+    obj.Update=Row.prototype.Update;
+    obj.Render=Row.prototype.Render;
+    return obj;
+}
+
+Row.prototype.Update= function(dt){
+    //console.log("update row");
+    if(this.movingObjectsType!="none"){
+        for (var j = 0; j < this.movingObjects.length; j++) {
+            this.movingObjects[j].Update(dt);
+        };
+        this.cooldown=this.cooldown-dt;
+        if(this.cooldown<=0){
+            //console.log("spawn object "+this.movingObjectsType);
+            switch(this.movingObjectsType) {
+                case "bug":
+                    if(this.speed>0)
+                        this.movingObjects.push(Enemy('images/enemy-bug-right.png',this.rindex,this.speed));
+                    else
+                        this.movingObjects.push(Enemy('images/enemy-bug-left.png',this.rindex,this.speed));
+                    break;
+                case "log":
+                    //code block
+                    break;
+            }
+            this.cooldown=this.cooldownTime;
+        }
+    }
+}
+
+Row.prototype.Render= function(dt){
+    //console.log("update row");
+    for (var j = 0; j < this.movingObjects.length; j++) {
+        this.movingObjects[j].DrawImage();
+    };
+}
+
 var Engine = (function(global) {
     /* Predefine the variables we'll be using within this scope,
      * create the canvas element, grab the 2D context for that canvas
@@ -25,9 +72,30 @@ var Engine = (function(global) {
         ctx = canvas.getContext('2d'),
         lastTime;
 
-    canvas.width = 505;
-    canvas.height = 606;
+    var Map = [
+            'images/water-block.png',   // Top row
+            'images/grass-block.png',
+            'images/stone-block.png',
+            'images/water-block.png',
+            'images/stone-block.png',
+            'images/grass-block.png'    // Bottom row
+        ],
+        row, col,
+        paused=false;
+    var mapRow=[];
+
+    mapRow.push(Row(0,0,0,"none"));
+    mapRow.push(Row(1,3,1,"bug"));
+    mapRow.push(Row(-2,2,2,"bug"));
+    mapRow.push(Row(1,3,3,"log"));
+    mapRow.push(Row(2,2,4,"bug"));
+    mapRow.push(Row(0,5,"none"));
+
+    canvas.width = tileWidth*numCols;
+    canvas.height = tileHeight*(numRows+1);
     doc.body.appendChild(canvas);
+
+    var player=Player('images/char-boy.png', 1.5);
 
     /* This function serves as the kickoff point for the game loop itself
      * and handles properly calling the update and render methods.
@@ -39,20 +107,21 @@ var Engine = (function(global) {
          * would be the same for everyone (regardless of how fast their
          * computer is) - hurray time!
          */
-        var now = Date.now(),
-            dt = (now - lastTime) / 1000.0;
+         if(!paused){
+            var now = Date.now(),
+                dt = (now - lastTime) / 1000.0;
 
-        /* Call our update/render functions, pass along the time delta to
-         * our update function since it may be used for smooth animation.
-         */
-        update(dt);
-        render();
+            /* Call our update/render functions, pass along the time delta to
+             * our update function since it may be used for smooth animation.
+             */
+            update(dt);
+            render();
 
-        /* Set our lastTime variable which is used to determine the time delta
-         * for the next time this function is called.
-         */
-        lastTime = now;
-
+            /* Set our lastTime variable which is used to determine the time delta
+             * for the next time this function is called.
+             */
+            lastTime = now;
+        }
         /* Use the browser's requestAnimationFrame function to call this
          * function again as soon as the browser is able to draw another frame.
          */
@@ -91,10 +160,18 @@ var Engine = (function(global) {
      * render methods.
      */
     function updateEntities(dt) {
-        allEnemies.forEach(function(enemy) {
+        /*allEnemies.forEach(function(enemy) {
             enemy.update(dt);
         });
-        player.update();
+        player.update();*/
+        var entitiesList="entities list:";
+        for (var i = 0; i < mapRow.length; i++) {
+            entitiesList=entitiesList+"\nrow "+i+" length "+mapRow[i].movingObjects.length;
+            mapRow[i].Update(dt);
+        };
+        player.Update();
+        console.log(entitiesList);
+
     }
 
     /* This function initially draws the "game level", it will then call
@@ -107,17 +184,7 @@ var Engine = (function(global) {
         /* This array holds the relative URL to the image used
          * for that particular row of the game level.
          */
-        var rowImages = [
-                'images/water-block.png',   // Top row is water
-                'images/stone-block.png',   // Row 1 of 3 of stone
-                'images/stone-block.png',   // Row 2 of 3 of stone
-                'images/stone-block.png',   // Row 3 of 3 of stone
-                'images/grass-block.png',   // Row 1 of 2 of grass
-                'images/grass-block.png'    // Row 2 of 2 of grass
-            ],
-            numRows = 6,
-            numCols = 5,
-            row, col;
+
 
         /* Loop through the number of rows and columns we've defined above
          * and, using the rowImages array, draw the correct image for that
@@ -132,10 +199,9 @@ var Engine = (function(global) {
                  * so that we get the benefits of caching these images, since
                  * we're using them over and over.
                  */
-                ctx.drawImage(Resources.get(rowImages[row]), col * 101, row * 83);
+                ctx.drawImage(Resources.get(Map[row]), col * tileWidth, row * tileHeight);
             }
         }
-
 
         renderEntities();
     }
@@ -147,12 +213,16 @@ var Engine = (function(global) {
     function renderEntities() {
         /* Loop through all of the objects within the allEnemies array and call
          * the render function you have defined.
-         */
+
         allEnemies.forEach(function(enemy) {
             enemy.render();
         });
 
-        player.render();
+        player.render();*/
+         for (var i = 0; i < mapRow.length; i++) {
+            mapRow[i].Render();
+        };
+        player.DrawImage();
     }
 
     /* This function does nothing but it could have been a good place to
@@ -171,7 +241,8 @@ var Engine = (function(global) {
         'images/stone-block.png',
         'images/water-block.png',
         'images/grass-block.png',
-        'images/enemy-bug.png',
+        'images/enemy-bug-left.png',
+        'images/enemy-bug-right.png',
         'images/char-boy.png'
     ]);
     Resources.onReady(init);
@@ -181,4 +252,9 @@ var Engine = (function(global) {
      * from within their app.js files.
      */
     global.ctx = ctx;
+    global.canvas = canvas;
+    global.mapRow = mapRow;
+    global.player = player;
+    global.paused = paused;
+
 })(this);
