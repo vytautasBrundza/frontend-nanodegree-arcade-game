@@ -60,7 +60,7 @@ Floater.prototype.Draw = function() {
     ctx.font = "48px arial";
     ctx.fillStyle = 'blue';
     ctx.fillText(this.text, this.x, this.y);
-};
+}
 
 var DrawPaused= function(){
     ctx.font = "48px arial";

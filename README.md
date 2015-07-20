@@ -7,7 +7,7 @@ for self-checking their submission.
 
 *** HOW TO PLAY THIS GAME ***
 
-Use arrow keys to move up, down, left and right.
+Use arrow keys to move up, down, left and right. Hit space to pause/unpause
 
 Collect gems to gain score points.
 

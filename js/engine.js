@@ -139,7 +139,7 @@ var Engine = (function(global) {
          * function again as soon as the browser is able to draw another frame.
          */
         win.requestAnimationFrame(main);
-    };
+    }
 
     /* This function does some initial setup that should only occur once,
      * particularly setting the lastTime variable that is required for the
@@ -190,7 +190,8 @@ var Engine = (function(global) {
         if(row.walkable){
             for (var i = 0; i < row.movingObjects.length; i++) {
                 var colObj=row.movingObjects[i];
-                if(colObj.x+Resources.get(colObj.img).width-COLLISION_REDUCTION>player.x && player.x+Resources.get(player.img).width-COLLISION_REDUCTION>colObj.x){
+                if(colObj.x+Resources.get(colObj.img).width-COLLISION_REDUCTION>player.x
+                    && player.x+Resources.get(player.img).width-COLLISION_REDUCTION>colObj.x){
                     // player is not on walkable object
                     GameOver(false);
                 }
@@ -199,7 +200,8 @@ var Engine = (function(global) {
             var onWalkable=false;
             for (var i = 0; i < row.movingObjects.length; i++) {
                 var colObj=row.movingObjects[i];
-                if(player.x+Resources.get(player.img).width-WALK_COLLISION_REDUCTION>colObj.x && colObj.x+Resources.get(colObj.img).width-WALK_COLLISION_REDUCTION>player.x){
+                if(player.x+Resources.get(player.img).width-WALK_COLLISION_REDUCTION>colObj.x
+                    && colObj.x+Resources.get(colObj.img).width-WALK_COLLISION_REDUCTION>player.x){
                    // player is on one of walkable objects
                    onWalkable=true;
                 }
@@ -210,7 +212,8 @@ var Engine = (function(global) {
         // check collision with static objects - at this point only bonus items are static
         for (var k = 0; k < row.staticObjects.length; k++) {
             var colObj=row.staticObjects[k];
-            if(colObj.x+Resources.get(colObj.img).width-COLLISION_REDUCTION>player.x && player.x+Resources.get(player.img).width-COLLISION_REDUCTION>colObj.x){
+            if(colObj.x+Resources.get(colObj.img).width-COLLISION_REDUCTION>player.x
+                && player.x+Resources.get(player.img).width-COLLISION_REDUCTION>colObj.x){
                 // add score
                 score=score+colObj.value;
                 // remove item
@@ -220,8 +223,9 @@ var Engine = (function(global) {
     }
 
     function GameOver(win) {
-        if(win){CreateFloater(CANVAS_WIDTH/3,CANVAS_HEIGHT*3/4,"You won!");}
-        else{CreateFloater(CANVAS_WIDTH/3,CANVAS_HEIGHT*3/4,"You lost!");}
+        if(win)
+            CreateFloater(CANVAS_WIDTH/3,CANVAS_HEIGHT*3/4,"You won!");
+        else CreateFloater(CANVAS_WIDTH/3,CANVAS_HEIGHT*3/4,"You lost!");
         reset();
         paused=true;
     }
@@ -247,7 +251,8 @@ var Engine = (function(global) {
         // render floating text boxes
         RenderFloaters();
         // draw paused text
-        if(paused){DrawPaused();};
+        if(paused)
+            DrawPaused();
     }
 
     /* This function is called by the render function and is called on each game
