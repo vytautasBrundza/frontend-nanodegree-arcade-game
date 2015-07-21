@@ -10,11 +10,11 @@ var CImageDecorator= function(obj,x,y,img){
 	obj.img=img;
 	obj.DrawImage=CImageDecorator.prototype.Draw;
 	return obj;
-}
+};
 
 CImageDecorator.prototype.Draw= function(){
 		ctx.drawImage(Resources.get(this.img),this.x,this.y);
-}
+};
 
 // custom sprite decorator - animated image
 
@@ -28,7 +28,7 @@ var CSpriteDecorator = function(obj,num)
 	obj.NextSprite=CSpriteDecorator.prototype.Next;
 	obj.DrawSprite=CSpriteDecorator.prototype.Draw;
 	return obj;
-}
+};
 
 CSpriteDecorator.prototype.Draw= function(){
 	image=Resources.get(this.img);
@@ -41,7 +41,7 @@ CSpriteDecorator.prototype.Draw= function(){
        this.y,
        image.width / this.num,
        image.height);
-}
+};
 
 CSpriteDecorator.prototype.Update=function(dt){
 	this.spriteTime=this.spriteTime+dt;
@@ -64,7 +64,7 @@ var MoveDecorator = function(obj, speed)
 	obj.MakeMove=MoveDecorator.prototype.MakeMove;
 	obj.speed=speed;
 	return obj;
-}
+};
 
 MoveDecorator.prototype.MakeMove= function(dt) {
     this.x=this.x+dt*this.speed*100;
@@ -74,7 +74,7 @@ MoveDecorator.prototype.MakeMove= function(dt) {
     else if(this.x<0-Resources.get(this.img).width){
     	mapRow[this.row].movingObjects.shift();
     }
-}
+};
 
 // custom game objects constructors
 
@@ -92,11 +92,11 @@ var Actor= function(img, row, speed){
 	obj=MoveDecorator(obj, speed);
 	obj.Update=Actor.prototype.Update;
 	return obj;
-}
+};
 
 Actor.prototype.Update=function(dt){
 	this.MakeMove(dt);
-}
+};
 
 var BonusObject= function(img, x, row, value){
 	obj={};
@@ -107,7 +107,7 @@ var BonusObject= function(img, x, row, value){
 	obj=CSpriteDecorator(obj,2);
 	obj.value=value;
 	return obj;
-}
+};
 
 // player constructor
 
@@ -125,7 +125,7 @@ var Player= function(img, speed){
 	obj.moveRight=false;
 	obj.riding=false;
 	return obj;
-}
+};
 
 Player.prototype.Update=function(dt){
 	if(this.moveLeft)
@@ -140,7 +140,8 @@ Player.prototype.Update=function(dt){
 	var imgwidth=Resources.get(this.img).width;
 	if(this.x>CANVAS_WIDTH-imgwidth)
 		this.x=CANVAS_WIDTH-imgwidth;
-}
+};
+
 Player.prototype.Reset=function(){
 	this.row=NUM_ROWS-1;
 	this.y=this.row*TILE_HEIGHT;
@@ -148,7 +149,7 @@ Player.prototype.Reset=function(){
 	this.riding=false;
 	this.moveLeft=false;
 	this.moveRight=false;
-}
+};
 
 // player should be jumping between rows, rather than moving
 
@@ -159,7 +160,7 @@ Player.prototype.MoveRow=function(direction){
 	}
 	else if(this.row>0 && direction=='up') {
 		this.row--;
-		if(this.row==0)
+		if(this.row===0)
 			GameOver(true);
 	}
 	this.y=this.row*TILE_HEIGHT;
@@ -167,5 +168,4 @@ Player.prototype.MoveRow=function(direction){
 		this.riding=false;
 	}
 	else this.riding=true;
-}
-
+};

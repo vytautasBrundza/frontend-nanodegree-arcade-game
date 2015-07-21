@@ -14,7 +14,7 @@
  * a little simpler to work with.
  */
 
- var Row=function(speed, cooldown, rindex, walkable, objects)
+var Row=function(speed, cooldown, rindex, walkable, objects)
 {
     var obj={};
     obj.rindex=rindex;
@@ -28,19 +28,19 @@
     obj.Update=Row.prototype.Update;
     obj.Render=Row.prototype.Render;
     return obj;
-}
+};
 
 Row.prototype.Update= function(dt){
     //update static objects - sprites
     for (var j = 0; j < this.staticObjects.length; j++) {
             this.staticObjects[j].UpdateSprite(dt);
-        };
+        }
     // update moving objects
     if(this.movingObjectsType!="none"){
         // move objects
-        for (var j = 0; j < this.movingObjects.length; j++) {
+        for (j = 0; j < this.movingObjects.length; j++) {
             this.movingObjects[j].Update(dt);
-        };
+        }
         // spawn new objects
         this.cooldown=this.cooldown-dt;
         if(this.cooldown<=0){
@@ -59,16 +59,16 @@ Row.prototype.Update= function(dt){
             this.cooldown=this.cooldownTime;
         }
     }
-}
+};
 
 Row.prototype.Render= function(dt){
     for (var i = 0; i < this.staticObjects.length; i++) {
         this.staticObjects[i].DrawSprite();
-    };
+    }
     for (var j = 0; j < this.movingObjects.length; j++) {
         this.movingObjects[j].DrawImage();
-    };
-}
+    }
+};
 
 var Engine = (function(global) {
     /* Predefine the variables we'll be using within this scope,
@@ -179,7 +179,7 @@ var Engine = (function(global) {
         // update map rows
         for (var i = 0; i < mapRow.length; i++) {
             mapRow[i].Update(dt);
-        };
+        }
         // update player
         player.Update(dt);
     }
@@ -190,8 +190,7 @@ var Engine = (function(global) {
         if(row.walkable){
             for (var i = 0; i < row.movingObjects.length; i++) {
                 var colObj=row.movingObjects[i];
-                if(colObj.x+Resources.get(colObj.img).width-COLLISION_REDUCTION>player.x
-                    && player.x+Resources.get(player.img).width-COLLISION_REDUCTION>colObj.x){
+                if(colObj.x+Resources.get(colObj.img).width-COLLISION_REDUCTION>player.x && player.x+Resources.get(player.img).width-COLLISION_REDUCTION>colObj.x){
                     // player is not on walkable object
                     GameOver(false);
                 }
@@ -200,20 +199,18 @@ var Engine = (function(global) {
             var onWalkable=false;
             for (var i = 0; i < row.movingObjects.length; i++) {
                 var colObj=row.movingObjects[i];
-                if(player.x+Resources.get(player.img).width-WALK_COLLISION_REDUCTION>colObj.x
-                    && colObj.x+Resources.get(colObj.img).width-WALK_COLLISION_REDUCTION>player.x){
+                if(player.x+Resources.get(player.img).width-WALK_COLLISION_REDUCTION>colObj.x && colObj.x+Resources.get(colObj.img).width-WALK_COLLISION_REDUCTION>player.x){
                    // player is on one of walkable objects
                    onWalkable=true;
                 }
             }
             if(!onWalkable)
             {GameOver(false);}
-        };
+        }
         // check collision with static objects - at this point only bonus items are static
         for (var k = 0; k < row.staticObjects.length; k++) {
             var colObj=row.staticObjects[k];
-            if(colObj.x+Resources.get(colObj.img).width-COLLISION_REDUCTION>player.x
-                && player.x+Resources.get(player.img).width-COLLISION_REDUCTION>colObj.x){
+            if(colObj.x+Resources.get(colObj.img).width-COLLISION_REDUCTION>player.x && player.x+Resources.get(player.img).width-COLLISION_REDUCTION>colObj.x){
                 // add score
                 score=score+colObj.value;
                 // remove item
@@ -263,7 +260,7 @@ var Engine = (function(global) {
         // render each row (row renders all objects that belongs to it)
         for (var i = 0; i < mapRow.length; i++) {
             mapRow[i].Render();
-        };
+        }
         // draw player
         player.DrawImage();
     }

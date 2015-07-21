@@ -5,6 +5,10 @@ Students should use this rubric: https://www.udacity.com/course/viewer#!/c-ud015
 
 for self-checking their submission.
 
+*** HOW TO RUN THIS GAME ***
+
+Open index.html using your favourite browser, or head to http://kiaurutis.co.nf/udacity/p3/
+
 *** HOW TO PLAY THIS GAME ***
 
 Use arrow keys to move up, down, left and right. Hit space to pause/unpause
