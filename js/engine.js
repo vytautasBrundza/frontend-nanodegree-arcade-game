@@ -274,10 +274,10 @@ var Engine = (function(global) {
         // add a new set of static objects
         mapRow[4].staticObjects.push(BonusObject('images/gem-blue-shining.png', CANVAS_WIDTH/3,4,20));
         mapRow[2].staticObjects.push(BonusObject('images/gem-blue-shining.png', CANVAS_WIDTH/2,2,20));
-        // reset player
-        player.Reset();
         //reset score;
         score=0;
+        // reset player
+        player.Reset();
     }
 
     /* Go ahead and load all of the images we know we're going to need to
